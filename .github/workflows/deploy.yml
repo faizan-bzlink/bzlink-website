@@ -1,28 +1,19 @@
-name: Secure Deploy to S3 + CloudFront
-
+name: Deploy to S3
 on:
   push:
-    branches: [ "main" ]
-
-permissions:
-  id-token: write
-  contents: read
-
+    branches: [ main ]
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS with OIDC (No Keys!)
+      - uses: actions/checkout@v4
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::361960318571:role/GitHub-bzlink-deploy-role
-          aws-region: ca-central-1
-
-      - name: Upload to S3
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Deploy to S3
         run: aws s3 sync . s3://bzlink-practice-site --delete --exclude ".git/*" --exclude ".github/*" --exclude "README.md"
-
       - name: Invalidate CloudFront
         run: aws cloudfront create-invalidation --distribution-id E3AHEKHTAACZH6 --paths "/*"
